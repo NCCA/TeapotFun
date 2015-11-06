@@ -1,0 +1,85 @@
+{
+  "ShaderProgram": {
+    "name": "Phong",
+     "debug" : false,
+  "Shaders"  : [
+    {
+      "type": "Vertex",
+      "name": "PhongVertex",
+      "path" : ["shaders/PhongVertex.glsl"]
+
+    },
+	{
+      "type": "Fragment",
+      "name": "PhongFragment",
+      "path" : ["shaders/PhongFragment.glsl"]
+    }
+  ]
+  },
+
+    "ShaderProgram": {
+      "name": "Normal",
+       "debug" : false,
+        "Shaders"  : [
+          {
+            "type": "Vertex",
+            "name": "NormalVertex",
+            "path" : ["shaders/normalVertex.glsl"]
+
+          },
+          {
+            "type": "Fragment",
+            "name": "NormalFragment",
+            "path" : ["shaders/normalFragment.glsl"]
+          },
+            {
+              "type": "Geometry",
+              "name": "NormalGeo",
+              "path" : ["shaders/normalGeo.glsl"]
+            }
+        ]
+    },
+
+    "ShaderProgram": {
+      "name": "Fire",
+       "debug" : false,
+    "Shaders"  : [
+      {
+        "type": "Vertex",
+        "name": "fireVertex",
+        "path" : ["shaders/fireshader/version.glsl",
+                  "shaders/fireshader/common.glsl",
+                    "shaders/fireshader/noise3D.glsl",
+                  "shaders/fireshader/PhongVertex.glsl"]
+
+      },
+      {
+        "type": "Fragment",
+        "name": "fireFragment",
+        "path" : ["shaders/fireshader/version.glsl",
+                  "shaders/fireshader/common.glsl",
+                  "shaders/fireshader/noise3D.glsl",
+                  "shaders/fireshader/PhongFragment.glsl"]
+      }
+    ]
+   },
+
+    "ShaderProgram": {
+      "name": "Texture",
+       "debug" : false,
+    "Shaders"  : [
+      {
+        "type": "Vertex",
+        "name": "TextureVertex",
+        "path" : ["shaders/TextureVertex.glsl"]
+
+      },
+      {
+        "type": "Fragment",
+        "name": "TextureFragment",
+        "path" : ["shaders/TextureFragment.glsl"]
+      }
+    ]
+    }
+
+}
