@@ -10,6 +10,8 @@
 #include <ngl/ShaderLib.h>
 #include <QList>
 #include <QGLWidget>
+#include <QColorDialog>
+#include "Form.h"
 
 //----------------------------------------------------------------------------------------------------------------------
 /// @brief the increment for x/y translation with mouse movement
@@ -28,8 +30,14 @@ NGLScene::NGLScene()
   m_spinXFace=0.0f;
   m_spinYFace=0.0f;
   setTitle("Qt5 Simple NGL Demo");
+  m_imageCapture=nullptr;
   initCamera();
   m_drawNormals=false;
+  Form *f=new Form(this);
+  f->show();
+//  connect(f->ui->s_bothButton,SIGNAL(clicked()),this,SLOT(setBoth())
+  //connect(f->ui.)
+  m_materialColour.set(1.0f,1.0f,1.0f,1.0f);
 }
 
 void NGLScene::initCamera()
@@ -96,26 +104,22 @@ void NGLScene::initializeGL()
     exit(EXIT_FAILURE);
   }
 
-  shader->autoRegisterUniforms("Phong");
-  shader->autoRegisterUniforms("Normal");
-  shader->autoRegisterUniforms("Fire");
-  shader->autoRegisterUniforms("Texture");
 
   // the shader will use the currently active material and light0 so set them
   (*shader)["Phong"]->use();
   ngl::Material m;
   m.setAmbient(ngl::Colour(0,0,0));
-  m.setDiffuse(ngl::Colour(1.0,1.0,1.0));
+  m.setDiffuse(ngl::Colour(0.9,0.9,0.9));
   m.setSpecular(ngl::Colour(1.0,1.0,1.0));
-  m.setSpecularExponent(50.0f);
+  m.setSpecularExponent(120.0f);
   // load our material values to the shader into the structure material (see Vertex shader)
   m.loadToShader("material");
   // Now we will create a basic Camera from the graphics library
   // This is a static camera so it only needs to be set once
   // First create Values for the camera position
-  ngl::Vec3 from(0,1,1);
-  ngl::Vec3 to(0,0,0);
-  ngl::Vec3 up(0,1,0);
+  ngl::Vec3 from(0.0f,0.0f,1.5f);
+  ngl::Vec3 to(0.0f,0.0f,0.0f);
+  ngl::Vec3 up(0.0f,1.0f,0.0f);
   // now load to our new camera
   m_cam.set(from,to,up);
   // set the shape using FOV 45 Aspect Ratio based on Width and Height
@@ -127,7 +131,7 @@ void NGLScene::initializeGL()
   // transformations
   ngl::Mat4 iv=m_cam.getViewMatrix();
   iv.transpose();
-  ngl::Light light(ngl::Vec3(-2,5,2),ngl::Colour(1,1,1,1),ngl::Colour(1,1,1,1),ngl::LightModes::POINTLIGHT );
+  ngl::Light light(ngl::Vec3(0,2,3),ngl::Colour(1,1,1,1),ngl::Colour(1,1,1,1),ngl::LightModes::POINTLIGHT );
   light.setTransform(iv);
   // load these values to the shader as well
   light.loadToShader("light");
@@ -145,7 +149,7 @@ void NGLScene::initializeGL()
   m.setAmbient(ngl::Colour(0,0,0));
   m.setDiffuse(ngl::Colour(1.0,1.0,1.0));
   m.setSpecular(ngl::Colour(1.0,1.0,1.0));
-  m.setSpecularExponent(50.0f);
+  m.setSpecularExponent(120.0f);
   // load our material values to the shader into the structure material (see Vertex shader)
   m.loadToShader("material");
   // Now we will create a basic Camera from the graphics library
@@ -161,7 +165,8 @@ void NGLScene::initializeGL()
   // load these values to the shader as well
   light.loadToShader("light");
 
-
+  shader->use("nglColourShader");
+  shader->setRegisteredUniform("Colour",1.0f,1.0f,1.0f,1.0f);
   startTimer(20);
   m_camTimer = new QTimer(this);
   connect(m_camTimer, SIGNAL(timeout()), this, SLOT(captureImage()));
@@ -199,56 +204,110 @@ void NGLScene::paintGL()
   rotX.rotateX(m_spinXFace);
   rotY.rotateY(m_spinYFace);
   // multiply the rotations
-  m_mouseGlobalTX=rotY*rotX;
+  ngl::Mat4 scale;
+  scale.scale(1.0,0.8,1.0);
+  m_mouseGlobalTX=rotY*rotX*scale;
   // add the translations
   m_mouseGlobalTX.m_m[3][0] = m_modelPos.m_x;
   m_mouseGlobalTX.m_m[3][1] = m_modelPos.m_y;
   m_mouseGlobalTX.m_m[3][2] = m_modelPos.m_z;
   ngl::ShaderLib *shader=ngl::ShaderLib::instance();
 
-
-  glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-
-  glViewport(0,0,m_width/2,m_height);
-  // get the VBO instance and draw the built in teapot
-
-  glBindTexture(GL_TEXTURE_2D,m_textureName);
-  m_screenQuad->draw();
-
-
-  glViewport(m_width/2,0,m_width/2,m_height);
-  // clear the screen and depth buffer
-  ngl::VAOPrimitives *prim=ngl::VAOPrimitives::instance();
-
-  // grab an instance of the shader manager
-  if(m_shaderMode == ShaderMode::PHONG)
-    shader->use("Phong");
-  else if(m_shaderMode== ShaderMode::FIRE)
-    shader->use("Fire");
-
-  // draw
-  loadMatricesToShader();
-  prim->draw("teapot");
-  if(m_drawNormals)
+  if(m_viewMode==DrawMode::BOTH)
   {
-    (*shader)["Normal"]->use();
-    ngl::Mat4 MV;
-    ngl::Mat4 MVP;
 
-    MV=m_mouseGlobalTX* m_cam.getViewMatrix();
-    MVP=MV*m_cam.getProjectionMatrix();
-    shader->setShaderParamFromMat4("MVP",MVP);
-    shader->setShaderParam1f("normalSize",0.1);
+    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+    // draw camera
+    glViewport(0,0,m_width/2,m_height);
+    // get the VBO instance and draw the built in teapot
+    glPolygonMode(GL_FRONT_AND_BACK,GL_FILL);
+    glBindTexture(GL_TEXTURE_2D,m_textureName);
+    m_screenQuad->draw();
 
+
+    glViewport(m_width/2,0,m_width/2,m_height);
+    // clear the screen and depth buffer
+    ngl::VAOPrimitives *prim=ngl::VAOPrimitives::instance();
+    if(m_wireframe)
+      glPolygonMode(GL_FRONT_AND_BACK,GL_LINE);
+
+      // grab an instance of the shader manager
+    if(m_shaderMode == ShaderMode::PHONG)
+      shader->use("Phong");
+    else if(m_shaderMode== ShaderMode::FIRE)
+      shader->use("Fire");
+    else if(m_shaderMode== ShaderMode::COLOUR)
+      shader->use("nglColourShader");
+
+
+    // draw
+    loadMatricesToShader();
     prim->draw("teapot");
-  }
+    if(m_drawNormals)
+    {
+      (*shader)["Normal"]->use();
+      ngl::Mat4 MV;
+      ngl::Mat4 MVP;
 
+      MV=m_mouseGlobalTX* m_cam.getViewMatrix();
+      MVP=MV*m_cam.getProjectionMatrix();
+      shader->setShaderParamFromMat4("MVP",MVP);
+      shader->setShaderParam1f("normalSize",0.1);
+
+      prim->draw("teapot");
+    }
+  }
+  else if(m_viewMode==DrawMode::CAMERA)
+  {
+    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+    // draw camera
+    glViewport(0,0,m_width,m_height);
+    // get the VBO instance and draw the built in teapot
+    glPolygonMode(GL_FRONT_AND_BACK,GL_FILL);
+    glBindTexture(GL_TEXTURE_2D,m_textureName);
+    m_screenQuad->draw();
+  }
+  else if(m_viewMode==DrawMode::CGI)
+  {
+    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+
+    glViewport(0,0,m_width,m_height);
+    // clear the screen and depth buffer
+    ngl::VAOPrimitives *prim=ngl::VAOPrimitives::instance();
+    if(m_wireframe)
+      glPolygonMode(GL_FRONT_AND_BACK,GL_LINE);
+
+      // grab an instance of the shader manager
+    if(m_shaderMode == ShaderMode::PHONG)
+      shader->use("Phong");
+    else if(m_shaderMode== ShaderMode::FIRE)
+      shader->use("Fire");
+    else if(m_shaderMode== ShaderMode::COLOUR)
+      shader->use("nglColourShader");
+
+    // draw
+    loadMatricesToShader();
+    prim->draw("teapot");
+    if(m_drawNormals)
+    {
+      (*shader)["Normal"]->use();
+      ngl::Mat4 MV;
+      ngl::Mat4 MVP;
+
+      MV=m_mouseGlobalTX* m_cam.getViewMatrix();
+      MVP=MV*m_cam.getProjectionMatrix();
+      shader->setShaderParamFromMat4("MVP",MVP);
+      shader->setShaderParam1f("normalSize",0.1);
+
+      prim->draw("teapot");
+    }
+
+  }
 }
 
 void NGLScene::processCapturedImage(int requestId, const QImage& img)
 {
     Q_UNUSED(requestId);
-    std::cout<<"image captured\n";
     QImage image = QGLWidget::convertToGLFormat(img);
     glBindTexture(GL_TEXTURE_2D,m_textureName);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
@@ -354,6 +413,7 @@ void NGLScene::wheelEvent(QWheelEvent *_event)
 void NGLScene::keyPressEvent(QKeyEvent *_event)
 {
   static float repeat=0.1f;
+  ngl::ShaderLib *shader=ngl::ShaderLib::instance();
 
   // that method is called every time the main window recives a key event.
   // we then switch on the key value and set the camera in the GLWindow
@@ -362,9 +422,9 @@ void NGLScene::keyPressEvent(QKeyEvent *_event)
   // escape key to quit
   case Qt::Key_Escape : QGuiApplication::exit(EXIT_SUCCESS); break;
   // turn on wirframe rendering
-  case Qt::Key_W : glPolygonMode(GL_FRONT_AND_BACK,GL_LINE); break;
+  case Qt::Key_W : m_wireframe=true; break;
   // turn off wire frame
-  case Qt::Key_S : glPolygonMode(GL_FRONT_AND_BACK,GL_FILL); break;
+  case Qt::Key_S : m_wireframe=false; break;
   // show full screen
   case Qt::Key_F : showFullScreen(); break;
   // show windowed
@@ -381,26 +441,103 @@ void NGLScene::keyPressEvent(QKeyEvent *_event)
     ngl::ShaderLib::instance()->setRegisteredUniform("repeat",repeat);
   break;
 
+  case Qt::Key_R :
+    std::cout<<"setting light to red\n";
+    shader->use("Phong");
+    shader->setUniform("light.diffuse",1.0f,0.0f,0.0f,1.0f);
+    break;
+
+  case Qt::Key_G :
+    std::cout<<"setting light to red\n";
+    shader->use("Phong");
+    shader->setUniform("light.diffuse",0.0f,1.0f,0.0f,1.0f);
+    break;
+  case Qt::Key_B :
+    std::cout<<"setting light to red\n";
+    shader->use("Phong");
+    shader->setUniform("light.diffuse",0.0f,0.0f,1.0f,1.0f);
+    break;
+  case Qt::Key_Space :
+    std::cout<<"setting light to red\n";
+    shader->use("Phong");
+    shader->setUniform("light.diffuse",1.0f,1.0f,1.0f,1.0f);
+    break;
+
   default : break;
   }
-  // finally update the GLWindow and re-draw
-  //if (isExposed())
     update();
+}
+
+void NGLScene::setColour(int _l)
+{
+  ngl::ShaderLib *shader=ngl::ShaderLib::instance();
+  shader->use("Phong");
+  switch (_l)
+  {
+  case 0 :
+    shader->setUniform("light.diffuse",1.0f,1.0f,1.0f,1.0f);
+  break;
+  case 1 :
+    shader->setUniform("light.diffuse",1.0f,0.0f,0.0f,1.0f);
+  break;
+  case 2 :
+    shader->setUniform("light.diffuse",0.0f,1.0f,0.0f,1.0f);
+  break;
+  case 3 :
+    shader->setUniform("light.diffuse",0.0f,0.0f,1.0f,1.0f);
+  break;
+
+
+  }
+
+  update();
 }
 
 void NGLScene::timerEvent(QTimerEvent *_event)
 {
+  if(m_shaderMode == ShaderMode::FIRE)
+  {
   static float t=0.0f;
   ngl::ShaderLib *shader=ngl::ShaderLib::instance();
   shader->use("Fire");
   shader->setRegisteredUniform("time",t);
   t+=0.01;
-
+  }
   update();
+}
+
+void NGLScene::setShaderMode(int _m)
+{
+  switch (_m)
+  {
+    case 0 : m_shaderMode=ShaderMode::PHONG; break;
+    case 1 : m_shaderMode=ShaderMode::COLOUR; break;
+    case 3 : m_shaderMode=ShaderMode::FIRE; break;
+
+  }
+}
+
+void NGLScene::setMaterialColour()
+{
+  QColor colour = QColorDialog::getColor();
+  // we now check to see if a colour was set or if the cancel was pressed
+  // using the isValid method
+  if (colour.isValid())
+  {
+    // if it was we get the colour values using the ..F() function and call the
+    // SetColour method in the GLWindow
+    m_materialColour.set(colour.redF(),colour.greenF(),colour.blueF(),1.0f);
+    ngl::ShaderLib *shader = ngl::ShaderLib::instance();
+    shader->use("nglColourShader");
+    shader->setRegisteredUniform("Colour",m_materialColour);
+    shader->use("Phong");
+    shader->setUniform("material.diffuse",m_materialColour);
+  }
 }
 
 void NGLScene::captureImage()
 {
-  m_imageCapture->capture();
+  if(m_imageCapture!=nullptr)
+    m_imageCapture->capture();
   update();
 }

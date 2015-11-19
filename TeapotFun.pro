@@ -10,6 +10,7 @@ isEqual(QT_MAJOR_VERSION, 5) {
 	cache()
 	DEFINES +=QT5BUILD
 }
+QT+=widgets
 # where to put moc auto generated files
 MOC_DIR=moc
 # on a mac we don't create a .app bundle file ( for ease of multiplatform use)
@@ -17,10 +18,12 @@ CONFIG-=app_bundle
 # Auto include all .cpp files in the project src directory (can specifiy individually if required)
 SOURCES+= $$PWD/src/NGLScene.cpp    \
 					$$PWD/src/main.cpp \
-					$$PWD/src/ScreenQuad.cpp
+					$$PWD/src/ScreenQuad.cpp \
+					$$PWD/src/Form.cpp
 # same for the .h files
 HEADERS+= $$PWD/include/NGLScene.h \
-					$$PWD/include/ScreenQuad.h
+					$$PWD/include/ScreenQuad.h \
+					$$PWD/include/Form.h
 # and add the include dir into the search path for Qt and make
 INCLUDEPATH +=./include
 # where our exe is going to live (root of project)
@@ -57,3 +60,7 @@ else{ # note brace must be here
 	message("Using custom NGL location")
 	include($(NGLDIR)/UseNGL.pri)
 }
+
+FORMS += \
+		ui/Form.ui
+

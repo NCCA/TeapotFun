@@ -9,6 +9,6 @@ in vec2 vertUV;
 // note the texture is compressed in this example as bgr
 void main ()
 {
-  fragColour.rgb=texture(tex,vertUV ).bgr;
+  fragColour.rgb=texture(tex,vertUV ).rgb;
 }
 

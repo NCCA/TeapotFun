@@ -1,0 +1,104 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ui version="4.0">
+ <class>Form</class>
+ <widget class="QWidget" name="Form">
+  <property name="geometry">
+   <rect>
+    <x>0</x>
+    <y>0</y>
+    <width>133</width>
+    <height>228</height>
+   </rect>
+  </property>
+  <property name="windowTitle">
+   <string>Controls</string>
+  </property>
+  <layout class="QVBoxLayout" name="verticalLayout">
+   <item>
+    <widget class="QPushButton" name="s_cameraButton">
+     <property name="text">
+      <string>Camera</string>
+     </property>
+    </widget>
+   </item>
+   <item>
+    <widget class="QPushButton" name="s_cgiButton">
+     <property name="text">
+      <string>CGI</string>
+     </property>
+    </widget>
+   </item>
+   <item>
+    <widget class="QPushButton" name="s_bothButton">
+     <property name="text">
+      <string>Both</string>
+     </property>
+    </widget>
+   </item>
+   <item>
+    <widget class="QCheckBox" name="s_showNormals">
+     <property name="text">
+      <string>Show Normals</string>
+     </property>
+    </widget>
+   </item>
+   <item>
+    <widget class="QComboBox" name="s_lightMode">
+     <item>
+      <property name="text">
+       <string>White</string>
+      </property>
+     </item>
+     <item>
+      <property name="text">
+       <string>Red</string>
+      </property>
+     </item>
+     <item>
+      <property name="text">
+       <string>Green</string>
+      </property>
+     </item>
+     <item>
+      <property name="text">
+       <string>Blue</string>
+      </property>
+     </item>
+    </widget>
+   </item>
+   <item>
+    <widget class="QComboBox" name="s_shaderMode">
+     <item>
+      <property name="text">
+       <string>Phong</string>
+      </property>
+     </item>
+     <item>
+      <property name="text">
+       <string>Colour</string>
+      </property>
+     </item>
+     <item>
+      <property name="text">
+       <string>Diffuse</string>
+      </property>
+     </item>
+     <item>
+      <property name="text">
+       <string>Noise</string>
+      </property>
+     </item>
+    </widget>
+   </item>
+   <item>
+    <widget class="QPushButton" name="s_colourButton">
+     <property name="text">
+      <string>Material Colour</string>
+     </property>
+    </widget>
+   </item>
+  </layout>
+ </widget>
+ <resources/>
+ <connections/>
+</ui>
