@@ -51,7 +51,9 @@ void NGLScene::initCamera()
   foreach (const QCameraInfo &cameraInfo, cameras)
   {
     std::cout<<"Device "<<cameraInfo.deviceName().toStdString()<<"\n";
-      if (cameraInfo.deviceName() == "0x14100000046d0825")
+    auto name = cameraInfo.deviceName();
+    std::cout<<name.toStdString()<<"\n";
+      if ( name == "0x14100000046d0825" || name == "0x1410000006038612")
       {
         m_camera= new QCamera(cameraInfo);
         m_camera->start();
@@ -104,9 +106,14 @@ void NGLScene::initializeGL()
     exit(EXIT_FAILURE);
   }
 
+  (*shader)["nglDiffuseShader"]->use();
+  shader->setRegisteredUniform("lightPos",ngl::Vec3(0,2,3));
+  shader->setRegisteredUniform("Colour",1.0f,1.0f,1.0f,1.0f);
+  shader->setRegisteredUniform("lightDiffuse",1.0f,1.0f,1.0f,1.0f);
 
   // the shader will use the currently active material and light0 so set them
   (*shader)["Phong"]->use();
+  shader->printRegisteredUniforms("Phong");
   ngl::Material m;
   m.setAmbient(ngl::Colour(0,0,0));
   m.setDiffuse(ngl::Colour(0.9,0.9,0.9));
@@ -197,6 +204,11 @@ void NGLScene::loadMatricesToShader()
 
 void NGLScene::paintGL()
 {
+  if(m_viewMode == DrawMode::BLANK)
+  {
+    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+    return;
+  }
   // Rotation based on the mouse position for our global transform
   ngl::Mat4 rotX;
   ngl::Mat4 rotY;
@@ -284,6 +296,8 @@ void NGLScene::paintGL()
       shader->use("Fire");
     else if(m_shaderMode== ShaderMode::COLOUR)
       shader->use("nglColourShader");
+    else if(m_shaderMode== ShaderMode::DIFFUSE)
+      shader->use("nglDiffuseShader");
 
     // draw
     loadMatricesToShader();
@@ -512,6 +526,7 @@ void NGLScene::setShaderMode(int _m)
   {
     case 0 : m_shaderMode=ShaderMode::PHONG; break;
     case 1 : m_shaderMode=ShaderMode::COLOUR; break;
+    case 2 : m_shaderMode=ShaderMode::DIFFUSE; break;
     case 3 : m_shaderMode=ShaderMode::FIRE; break;
 
   }
@@ -530,8 +545,27 @@ void NGLScene::setMaterialColour()
     ngl::ShaderLib *shader = ngl::ShaderLib::instance();
     shader->use("nglColourShader");
     shader->setRegisteredUniform("Colour",m_materialColour);
+    shader->use("nglDiffuseShader");
+    shader->setRegisteredUniform("Colour",m_materialColour);
     shader->use("Phong");
     shader->setUniform("material.diffuse",m_materialColour);
+  }
+}
+
+void NGLScene::setLightColour()
+{
+  QColor colour = QColorDialog::getColor();
+  // we now check to see if a colour was set or if the cancel was pressed
+  // using the isValid method
+  if (colour.isValid())
+  {
+    // if it was we get the colour values using the ..F() function and call the
+    // SetColour method in the GLWindow
+    ngl::ShaderLib *shader = ngl::ShaderLib::instance();
+    shader->use("nglDiffuseShader");
+    shader->setRegisteredUniform("lightDiffuse",colour.redF(),colour.greenF(),colour.blueF(),1.0f);
+    shader->use("Phong");
+    shader->setUniform("light.diffuse",colour.redF(),colour.greenF(),colour.blueF(),1.0f);
   }
 }
 

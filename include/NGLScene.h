@@ -145,13 +145,13 @@ private:
     QCamera *m_camera;
     GLuint m_textureName;
     bool m_drawNormals;
-    enum class ShaderMode {PHONG,FIRE,COLOUR};
+    enum class ShaderMode {PHONG,FIRE,COLOUR,DIFFUSE};
     ShaderMode m_shaderMode=ShaderMode::PHONG;
     QCameraImageCapture *m_imageCapture;
     std::unique_ptr<ScreenQuad> m_screenQuad;
     QTimer *m_camTimer;
     bool m_wireframe=false;
-    enum class DrawMode{CAMERA,CGI,BOTH};
+    enum class DrawMode{CAMERA,CGI,BOTH,BLANK};
     DrawMode m_viewMode=DrawMode::CAMERA;
     ngl::Vec4 m_materialColour;
 
@@ -159,10 +159,13 @@ public slots :
     void setBoth(){ m_viewMode=DrawMode::BOTH; update();}
     void setCamera(){ m_viewMode=DrawMode::CAMERA; update();}
     void setCGI(){ m_viewMode=DrawMode::CGI; update();}
+    void setBlank(){ m_viewMode=DrawMode::BLANK; update();}
     void setNormals(bool _n){m_drawNormals=_n;}
     void setColour(int _l);
     void setShaderMode(int _m);
     void setMaterialColour();
+    void setLightColour();
+
 private slots :
     void processCapturedImage(int requestId, const QImage &img);
     void captureImage();

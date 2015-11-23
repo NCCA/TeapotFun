@@ -6,14 +6,21 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>133</width>
-    <height>228</height>
+    <width>147</width>
+    <height>267</height>
    </rect>
   </property>
   <property name="windowTitle">
    <string>Controls</string>
   </property>
   <layout class="QVBoxLayout" name="verticalLayout">
+   <item>
+    <widget class="QPushButton" name="s_blankButton">
+     <property name="text">
+      <string>Blank</string>
+     </property>
+    </widget>
+   </item>
    <item>
     <widget class="QPushButton" name="s_cameraButton">
      <property name="text">
@@ -94,6 +101,13 @@
     <widget class="QPushButton" name="s_colourButton">
      <property name="text">
       <string>Material Colour</string>
+     </property>
+    </widget>
+   </item>
+   <item>
+    <widget class="QPushButton" name="s_lightColour">
+     <property name="text">
+      <string>Light Colour</string>
      </property>
     </widget>
    </item>
